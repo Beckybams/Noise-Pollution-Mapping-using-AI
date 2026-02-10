@@ -1,0 +1,110 @@
+# Noise Pollution Mapping using AI (Synthetic Data)
+# -------------------------------------------------
+# This project simulates environmental noise data and uses
+# machine learning to predict noise levels across locations.
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+
+# -----------------------------
+# 1. Generate Synthetic Data
+# -----------------------------
+np.random.seed(42)
+
+n_samples = 1000
+
+# Simulated features
+latitude = np.random.uniform(6.3, 6.7, n_samples)      # example city latitude range
+longitude = np.random.uniform(3.2, 3.6, n_samples)     # example city longitude range
+traffic_density = np.random.randint(0, 100, n_samples)  # vehicles per unit time
+industrial_activity = np.random.randint(0, 50, n_samples)
+population_density = np.random.randint(100, 10000, n_samples)
+
+# Simulated noise level (target) in decibels (dB)
+noise_level = (
+    30
+    + 0.4 * traffic_density
+    + 0.6 * industrial_activity
+    + 0.002 * population_density
+    + np.random.normal(0, 5, n_samples)  # noise
+)
+
+# Create DataFrame
+data = pd.DataFrame({
+    "latitude": latitude,
+    "longitude": longitude,
+    "traffic_density": traffic_density,
+    "industrial_activity": industrial_activity,
+    "population_density": population_density,
+    "noise_level_db": noise_level
+})
+
+# -----------------------------
+# 2. Prepare Data
+# -----------------------------
+X = data.drop("noise_level_db", axis=1)
+y = data["noise_level_db"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# -----------------------------
+# 3. Train AI Model
+# -----------------------------
+model = RandomForestRegressor(
+    n_estimators=100,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+# -----------------------------
+# 4. Evaluate Model
+# -----------------------------
+y_pred = model.predict(X_test)
+
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print("Model Performance")
+print("-----------------")
+print(f"Mean Squared Error: {mse:.2f}")
+print(f"R² Score: {r2:.2f}")
+
+# -----------------------------
+# 5. Predict Noise Map (Grid)
+# -----------------------------
+# Create a spatial grid for mapping
+lat_grid = np.linspace(latitude.min(), latitude.max(), 50)
+lon_grid = np.linspace(longitude.min(), longitude.max(), 50)
+
+noise_map = []
+
+for lat in lat_grid:
+    for lon in lon_grid:
+        sample = pd.DataFrame({
+            "latitude": [lat],
+            "longitude": [lon],
+            "traffic_density": [50],
+            "industrial_activity": [20],
+            "population_density": [3000]
+        })
+        predicted_noise = model.predict(sample)[0]
+        noise_map.append([lat, lon, predicted_noise])
+
+noise_map_df = pd.DataFrame(
+    noise_map,
+    columns=["latitude", "longitude", "predicted_noise_db"]
+)
+
+print("\nSample of Predicted Noise Map:")
+print(noise_map_df.head())
+
+# -----------------------------
+# End of Project
+# -----------------------------
+file1
